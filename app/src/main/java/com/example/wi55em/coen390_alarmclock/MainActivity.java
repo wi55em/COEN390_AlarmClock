@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -19,6 +20,8 @@ public class MainActivity extends AppCompatActivity {
 
     protected FloatingActionButton fab;
     protected ListView listView;
+    protected TextView noAlarm;
+    protected ImageView imgSleep;
     protected ArrayList<Alarm> myAlarms = new ArrayList<>();;
 
     @Override
@@ -33,6 +36,8 @@ public class MainActivity extends AppCompatActivity {
     private void setupUI() {
 
         listView = findViewById(R.id.editListView);
+        noAlarm = findViewById(R.id.editNoAlarm);
+        imgSleep = findViewById(R.id.editImageView);
 
         fab = findViewById(R.id.fab_plus);
         fab.setImageResource(R.drawable.ic_action_add);
@@ -55,11 +60,13 @@ public class MainActivity extends AppCompatActivity {
 
         if (myAlarms.size() <= 0) {
             listView.setVisibility(View.INVISIBLE);
+            noAlarm.setVisibility(View.VISIBLE);
+            imgSleep.setVisibility(View.VISIBLE);
         }
 
         for(Alarm i: myAlarms) {
-            TextView tV = findViewById(R.id.editNoAlarm);
-            tV.setVisibility(View.INVISIBLE);
+            noAlarm.setVisibility(View.INVISIBLE);
+            imgSleep.setVisibility(View.INVISIBLE);
             listView.setVisibility(View.VISIBLE);
             listAlarms.add(i.getHour() + ":" + i.getMinute());
         }
