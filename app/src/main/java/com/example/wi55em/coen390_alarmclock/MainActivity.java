@@ -1,13 +1,17 @@
 package com.example.wi55em.coen390_alarmclock;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.Color;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 
@@ -25,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
         setupUI();
     }
 
+    @SuppressLint("ResourceAsColor")
     private void setupUI() {
 
         listView = findViewById(R.id.editListView);
@@ -49,14 +54,32 @@ public class MainActivity extends AppCompatActivity {
         ArrayList<String> listAlarms = new ArrayList<>();
 
         if (myAlarms.size() <= 0) {
-            listAlarms.add("No alarm clock added yet" );
+            listView.setVisibility(View.INVISIBLE);
         }
 
         for(Alarm i: myAlarms) {
+            TextView tV = findViewById(R.id.editNoAlarm);
+            tV.setVisibility(View.INVISIBLE);
+            listView.setVisibility(View.VISIBLE);
             listAlarms.add(i.getHour() + ":" + i.getMinute());
         }
 
-        ArrayAdapter adapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1, listAlarms);
+        //This method is used to change the color of the ListView text
+        ArrayAdapter<String> adapter=new ArrayAdapter<String>(
+                this, android.R.layout.simple_list_item_1, listAlarms){
+
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view =super.getView(position, convertView, parent);
+
+                TextView textView=(TextView) view.findViewById(android.R.id.text1);
+
+                /*YOUR CHOICE OF COLOR*/
+                textView.setTextColor(Color.WHITE);
+
+                return view;
+            }
+        };
         listView.setAdapter(adapter);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {

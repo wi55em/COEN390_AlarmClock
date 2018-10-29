@@ -30,7 +30,6 @@
         android:layout_height="0dp"
         android:layout_marginTop="117dp"
         android:layout_marginBottom="20dp"
-        android:listSelector="#FD9BCB"
         android:textFilterEnabled="false"
         app:layout_constraintBottom_toTopOf="@+id/fab_plus"
         app:layout_constraintEnd_toEndOf="parent"
@@ -53,4 +52,23 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.555" />
+
+    <TextView
+        android:id="@+id/editNoAlarm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="97dp"
+        android:text="No alarm added yet !"
+        android:textColor="@android:color/background_light"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.485"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.341" />
 </android.support.constraint.ConstraintLayout>
