@@ -64,7 +64,10 @@ public class CreateAlarmActivity extends DialogFragment {
                 if(f) days += 5;
                 if(sa) days += 6;
                 if(su) days += 7;
-                int day = Integer.parseInt(days);
+                int day;
+                if(days == "")
+                    day = 0;
+                else day = Integer.parseInt(days);
                 databaseHelper = new DatabaseHelper(getActivity());
                 databaseHelper.insertAlarm(new Alarm(hour, min, day, true));
                 ((MainActivity)getActivity()).loadListView();
