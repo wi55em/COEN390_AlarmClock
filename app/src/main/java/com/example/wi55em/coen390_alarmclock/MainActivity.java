@@ -10,9 +10,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.example.wi55em.coen390_alarmclock.Bluetooth.BluetoothController;
 
 import java.util.ArrayList;
 
@@ -22,12 +25,18 @@ public class MainActivity extends AppCompatActivity {
     protected ListView listView;
     protected TextView noAlarm;
     protected ImageView imgSleep;
+
+    protected Button alarmPage;
+    protected Button timerPage;
+    protected Button clockwatchPage;
+    protected Button connectPage;
+
     protected ArrayList<Alarm> myAlarms = new ArrayList<>();;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_home);
+        setContentView(R.layout.activity_main);
 
         setupUI();
     }
@@ -35,19 +44,34 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("ResourceAsColor")
     private void setupUI() {
 
-        listView = findViewById(R.id.editListView);
-        noAlarm = findViewById(R.id.editNoAlarm);
-        imgSleep = findViewById(R.id.editImageView);
-
         fab = findViewById(R.id.fab_plus);
         fab.setImageResource(R.drawable.ic_action_add);
         fab.setBackgroundColor(R.color.violet);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                goToCreateAlarmActivity();
+                CreateAlarmActivity dialog = new CreateAlarmActivity();
+                dialog.show(getSupportFragmentManager(), "Create Alarm");
+
+                //goToCreateAlarmActivity();
             }
         });
+
+        listView = findViewById(R.id.editListView);
+        noAlarm = findViewById(R.id.editNoAlarm);
+        imgSleep = findViewById(R.id.editImageView);
+
+        alarmPage = findViewById(R.id.AlarmPage);
+        timerPage = findViewById(R.id.TimerPage);
+        clockwatchPage = findViewById(R.id.ClockwatchPage);
+        connectPage = findViewById(R.id.ConnectPage);
+        connectPage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                goToBluetoothControllerActivity();
+            }
+        });
+
 
         loadListView();
     }
@@ -68,12 +92,11 @@ public class MainActivity extends AppCompatActivity {
             noAlarm.setVisibility(View.INVISIBLE);
             imgSleep.setVisibility(View.INVISIBLE);
             listView.setVisibility(View.VISIBLE);
-            listAlarms.add(i.getHour() + ":" + i.getMinute());
+            listAlarms.add(i.getHour() + ":" + i.getMinute() + " Days of the week:" + i.getDays());
         }
 
         //This method is used to change the color of the ListView text
-        ArrayAdapter<String> adapter=new ArrayAdapter<String>(
-                this, android.R.layout.simple_list_item_1, listAlarms){
+        ArrayAdapter<String> adapter=new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, listAlarms){
 
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
@@ -108,4 +131,11 @@ public class MainActivity extends AppCompatActivity {
         Intent i = new Intent(this, CreateAlarmActivity.class);
         startActivity(i);
     }
+
+    private void goToBluetoothControllerActivity() {
+        Intent i;
+        i = new Intent(this, BluetoothController.class);
+        startActivity(i);
+    }
+
 }

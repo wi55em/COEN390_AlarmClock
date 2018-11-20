@@ -64,7 +64,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         contentValues.put(Config.COLUMN_ALARM_HOUR, alarm.getHour());
         contentValues.put(Config.COLUMN_ALARM_MINUTE, alarm.getMinute());
         contentValues.put(Config.COLUMN_ALARM_DAYS, alarm.getDays());
-        contentValues.put(Config.COLUMN_ALARM_ONOFF, alarm.getOnOff());
+        if(alarm.getOnOff())
+            contentValues.put(Config.COLUMN_ALARM_ONOFF, 1);
+        else
+            contentValues.put(Config.COLUMN_ALARM_ONOFF, 0);
 
         try {
             id = sqLiteDatabase.insertOrThrow(Config.TABLE_ALARM, null, contentValues);
@@ -80,9 +83,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public ArrayList<Alarm> getAllAlarms(){
 
-        //SQLiteDatabase sqLiteDatabase = this.getReadableDatabase();
+        SQLiteDatabase sqLiteDatabase = this.getReadableDatabase();
 
-        /*Cursor cursor = null;
+        Cursor cursor = null;
         try {
             cursor = sqLiteDatabase.query(Config.TABLE_ALARM, null, null, null, null, null, null, null);
             if(cursor!=null)
@@ -92,7 +95,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         int hour = cursor.getInt(cursor.getColumnIndex(Config.COLUMN_ALARM_HOUR));
                         int minute = cursor.getInt(cursor.getColumnIndex(Config.COLUMN_ALARM_MINUTE));
                         int days = cursor.getInt(cursor.getColumnIndex(Config.COLUMN_ALARM_DAYS));
-                        boolean on = true;
+                        boolean on;
                         if(cursor.getInt(cursor.getColumnIndex(Config.COLUMN_ALARM_ONOFF)) == 0)
                             on = false;
                         else
@@ -109,7 +112,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             if(cursor!=null)
                 cursor.close();
             sqLiteDatabase.close();
-        }*/
+        }
         ArrayList<Alarm> empty = new ArrayList<>();
         return empty;
     }

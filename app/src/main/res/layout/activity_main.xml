@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/background"
+    android:background="@mipmap/background"
     tools:context=".MainActivity">
 
     <android.support.design.widget.FloatingActionButton
@@ -41,18 +41,18 @@
         android:id="@+id/AppTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:text="Alarm Clock"
         android:textColor="@android:color/background_light"
         android:textSize="22sp"
         android:textStyle="bold"
         android:typeface="normal"
-        android:gravity="center"
         app:layout_constraintBottom_toTopOf="@+id/editListView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.102"
+        app:layout_constraintHorizontal_bias="0.087"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.436" />
+        app:layout_constraintVertical_bias="0.183" />
 
     <TextView
         android:id="@+id/editNoAlarm"
@@ -90,5 +90,53 @@
         app:layout_constraintStart_toStartOf="@+id/editListView"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.33"
-        app:srcCompat="@drawable/backgound_sleepimage" />
+        app:srcCompat="@mipmap/backgoundsleepimage" />
+
+    <Button
+        android:id="@+id/AlarmPage"
+        android:layout_width="0dp"
+        android:layout_height="38dp"
+        android:layout_marginBottom="7dp"
+        android:text="Alarms"
+        app:layout_constraintBottom_toTopOf="@+id/editListView"
+        app:layout_constraintEnd_toStartOf="@+id/TimerPage"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/AppTitle"
+        app:layout_constraintVertical_bias="0.73" />
+
+    <Button
+        android:id="@+id/TimerPage"
+        android:layout_width="88dp"
+        android:layout_height="38dp"
+        android:text="Timer"
+        app:layout_constraintBottom_toTopOf="@+id/editListView"
+        app:layout_constraintEnd_toStartOf="@+id/ClockwatchPage"
+        app:layout_constraintStart_toEndOf="@+id/AlarmPage"
+        app:layout_constraintTop_toBottomOf="@+id/AppTitle"
+        app:layout_constraintVertical_bias="0.575" />
+
+    <Button
+        android:id="@+id/ConnectPage"
+        android:layout_width="0dp"
+        android:layout_height="38dp"
+        android:text="Connect"
+        app:layout_constraintBottom_toTopOf="@+id/editListView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/ClockwatchPage"
+        app:layout_constraintTop_toBottomOf="@+id/AppTitle"
+        app:layout_constraintVertical_bias="0.575" />
+
+    <Button
+        android:id="@+id/ClockwatchPage"
+        android:layout_width="wrap_content"
+        android:layout_height="37dp"
+        android:layout_marginTop="3dp"
+        android:layout_marginBottom="4dp"
+        android:text="Stopwatch"
+        app:layout_constraintBottom_toTopOf="@+id/editListView"
+        app:layout_constraintEnd_toStartOf="@+id/ConnectPage"
+        app:layout_constraintStart_toEndOf="@+id/TimerPage"
+        app:layout_constraintTop_toBottomOf="@+id/AppTitle"
+        app:layout_constraintVertical_bias="0.629" />
 </android.support.constraint.ConstraintLayout>

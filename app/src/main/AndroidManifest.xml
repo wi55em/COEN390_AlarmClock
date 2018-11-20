@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.wi55em.coen390_alarmclock">
 
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -19,7 +24,12 @@
         <activity
             android:name=".CreateAlarmActivity"
             android:label="@string/title_activity_create_alarm"
-            android:theme="@style/AppTheme"></activity>
+            android:theme="@style/AppTheme" />
+
+        <service android:name=".Bluetooth.BluetoothLeService" android:enabled="true"/>
+        <activity
+            android:name=".Bluetooth.BluetoothController"
+            android:label="@string/title_activity_main"></activity>
     </application>
 
 </manifest>

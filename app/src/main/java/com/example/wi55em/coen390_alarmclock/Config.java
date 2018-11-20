@@ -10,7 +10,7 @@ public class Config {
     public static final String COLUMN_ALARM_HOUR = "hour";
     public static final String COLUMN_ALARM_MINUTE = "minute";
     public static final String COLUMN_ALARM_DAYS = "days";
-    public static final String COLUMN_ALARM_ONOFF = "days";
+    public static final String COLUMN_ALARM_ONOFF = "onoff";
 
 
 }
