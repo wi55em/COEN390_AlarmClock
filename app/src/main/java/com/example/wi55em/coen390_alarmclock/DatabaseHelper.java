@@ -3,7 +3,6 @@ package com.example.wi55em.coen390_alarmclock;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -58,6 +57,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public long insertAlarm(Alarm alarm){
 
         long id = -1;
+        //get all alarms
+        //delete database
+        //sort
+        //rewrite database
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
 
         ContentValues contentValues = new ContentValues();
