@@ -3,6 +3,7 @@ package com.example.wi55em.coen390_alarmclock;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -57,10 +58,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public long insertAlarm(Alarm alarm){
 
         long id = -1;
-        //get all alarms
-        //delete database
-        //sort
-        //rewrite database
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
 
         ContentValues contentValues = new ContentValues();
@@ -84,6 +81,34 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return id;
     }
 
+    public long updateAlarm(Alarm alarm){
+
+        long id = -1;
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(Config.COLUMN_ALARM_HOUR, alarm.getHour());
+        contentValues.put(Config.COLUMN_ALARM_MINUTE, alarm.getMinute());
+        contentValues.put(Config.COLUMN_ALARM_DAYS, alarm.getDays());
+        if(alarm.getOnOff())
+            contentValues.put(Config.COLUMN_ALARM_ONOFF, 1);
+        else
+            contentValues.put(Config.COLUMN_ALARM_ONOFF, 0);
+
+        try {
+            id = sqLiteDatabase.update(Config.TABLE_ALARM, contentValues, Config.COLUMN_ALARM_ID + " = ? ",
+                    new String[] {String.valueOf(alarm.getID())});
+        } catch (SQLiteException e){
+            Log.d(TAG,"Exception: " + e.getMessage());
+            Toast.makeText(context, "Operation failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        } finally {
+            sqLiteDatabase.close();
+        }
+
+        return id;
+    }
+
+
     public ArrayList<Alarm> getAllAlarms(){
 
         SQLiteDatabase sqLiteDatabase = this.getReadableDatabase();
@@ -95,6 +120,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 if(cursor.moveToFirst()){
                     ArrayList<Alarm> alarmList = new ArrayList<>();
                     do {
+                        int id = cursor.getInt(cursor.getColumnIndex(Config.COLUMN_ALARM_ID));
                         int hour = cursor.getInt(cursor.getColumnIndex(Config.COLUMN_ALARM_HOUR));
                         int minute = cursor.getInt(cursor.getColumnIndex(Config.COLUMN_ALARM_MINUTE));
                         int days = cursor.getInt(cursor.getColumnIndex(Config.COLUMN_ALARM_DAYS));
@@ -103,7 +129,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                             on = false;
                         else
                             on = true;
-                        alarmList.add(new Alarm(hour, minute, days, on));
+                        alarmList.add(new Alarm(id, hour, minute, days, on));
                     }   while (cursor.moveToNext());
 
                     return alarmList;
@@ -136,18 +162,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
 
         return deletedRowCount;
-    }
+    }*/
 
     public boolean deleteAllCourses(){
         boolean deleteStatus = false;
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
 
         try {
-            //for "1" delete() method returns number of deleted rows
-            //if you don't want row count just use delete(TABLE_NAME, null, null)
-            sqLiteDatabase.delete(Config.TABLE_COURSE, null, null);
 
-            long count = DatabaseUtils.queryNumEntries(sqLiteDatabase, Config.TABLE_COURSE);
+            sqLiteDatabase.delete(Config.TABLE_ALARM, null, null);
+
+            long count = DatabaseUtils.queryNumEntries(sqLiteDatabase, Config.TABLE_ALARM);
 
             if(count==0)
                 deleteStatus = true;
@@ -160,6 +185,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
 
         return deleteStatus;
-    }*/
+    }
 
 }

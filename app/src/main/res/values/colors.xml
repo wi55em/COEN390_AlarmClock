@@ -5,6 +5,8 @@
     <color name="colorAccent">#d81b60</color>
     <color name="violet">#6f7e14e0</color>
     <color name="white">#FFFFFF</color>
-    <color name="pink">#51B814BB</color>
+    <color name="pink">#83d01cd3</color>
     <color name="pink2">#19B814BB</color>
+    <color name="pink3">#30B814BB</color>
+    <color name="black_overlay">#66000000</color>
 </resources>

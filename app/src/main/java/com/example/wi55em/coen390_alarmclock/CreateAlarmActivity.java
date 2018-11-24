@@ -1,12 +1,12 @@
 package com.example.wi55em.coen390_alarmclock;
 
+import android.annotation.SuppressLint;
 import android.content.res.Resources;
 import android.graphics.Paint;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.DialogFragment;
-import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +18,7 @@ import android.widget.TimePicker;
 import java.lang.reflect.Field;
 
 import static com.example.wi55em.coen390_alarmclock.R.color.colorAccent;
+import static com.example.wi55em.coen390_alarmclock.R.color.pink;
 import static com.example.wi55em.coen390_alarmclock.R.color.violet;
 
 public class CreateAlarmActivity extends DialogFragment {
@@ -69,7 +70,7 @@ public class CreateAlarmActivity extends DialogFragment {
                     day = 0;
                 else day = Integer.parseInt(days);
                 databaseHelper = new DatabaseHelper(getActivity());
-                databaseHelper.insertAlarm(new Alarm(hour, min, day, true));
+                databaseHelper.insertAlarm(new Alarm(-1, hour, min, day, true));
                 ((MainActivity)getActivity()).loadListView();
                 getDialog().dismiss();
             }
@@ -78,6 +79,7 @@ public class CreateAlarmActivity extends DialogFragment {
         return view;
     }
 
+    @SuppressLint("ResourceAsColor")
     private void setupUI(View view) {
 
         timePicker = view.findViewById(R.id.simpleTimePicker);
@@ -99,14 +101,13 @@ public class CreateAlarmActivity extends DialogFragment {
             @Override
             public void onClick(View view) {
                 if(time%2== 0) {
-                    mon.setBackgroundColor(getResources().getColor(violet));
+                    mon.setBackgroundTintList(getResources().getColorStateList(violet));
                     m = true;
-                    time++;
                 } else {
-                    mon.setBackgroundColor(getResources().getColor(colorAccent));
+                    mon.setBackgroundTintList(getResources().getColorStateList(pink));
                     m = false;
-                    time++;
                 }
+                time++;
             }
         });
 
@@ -117,14 +118,13 @@ public class CreateAlarmActivity extends DialogFragment {
             @Override
             public void onClick(View view) {
                 if(time%2== 0) {
-                    tue.setBackgroundColor(getResources().getColor(violet));
+                    tue.setBackgroundTintList(getResources().getColorStateList(violet));
                     tu = true;
-                    time++;
                 } else {
-                    tue.setBackgroundColor(getResources().getColor(colorAccent));
-                    m = false;
-                    time++;
+                    tue.setBackgroundTintList(getResources().getColorStateList(pink));
+                    tu = false;
                 }
+                time++;
             }
         });
 
@@ -135,11 +135,11 @@ public class CreateAlarmActivity extends DialogFragment {
             @Override
             public void onClick(View view) {
                 if(time%2== 0) {
-                    wed.setBackgroundColor(getResources().getColor(violet));
+                    wed.setBackgroundTintList(getResources().getColorStateList(violet));
                     w = true;
                     time++;
                 } else {
-                    wed.setBackgroundColor(getResources().getColor(colorAccent));
+                    wed.setBackgroundTintList(getResources().getColorStateList(pink));
                     w = false;
                     time++;
                 }
@@ -153,11 +153,11 @@ public class CreateAlarmActivity extends DialogFragment {
             @Override
             public void onClick(View view) {
                 if(time%2== 0) {
-                    thu.setBackgroundColor(getResources().getColor(violet));
+                    thu.setBackgroundTintList(getResources().getColorStateList(violet));
                     th = true;
                     time++;
                 } else {
-                    thu.setBackgroundColor(getResources().getColor(colorAccent));
+                    thu.setBackgroundTintList(getResources().getColorStateList(pink));
                     th = false;
                     time++;
                 }
@@ -171,11 +171,11 @@ public class CreateAlarmActivity extends DialogFragment {
             @Override
             public void onClick(View view) {
                 if(time%2== 0) {
-                    fri.setBackgroundColor(getResources().getColor(violet));
+                    fri.setBackgroundTintList(getResources().getColorStateList(violet));
                     f = true;
                     time++;
                 } else {
-                    fri.setBackgroundColor(getResources().getColor(colorAccent));
+                    fri.setBackgroundTintList(getResources().getColorStateList(pink));
                     f = false;
                     time++;
                 }
@@ -189,11 +189,11 @@ public class CreateAlarmActivity extends DialogFragment {
             @Override
             public void onClick(View view) {
                 if(time%2== 0) {
-                    sat.setBackgroundColor(getResources().getColor(violet));
+                    sat.setBackgroundTintList(getResources().getColorStateList(violet));
                     sa = true;
                     time++;
                 } else {
-                    sat.setBackgroundColor(getResources().getColor(colorAccent));
+                    sat.setBackgroundTintList(getResources().getColorStateList(pink));
                     sa = false;
                     time++;
                 }
@@ -207,11 +207,11 @@ public class CreateAlarmActivity extends DialogFragment {
             @Override
             public void onClick(View view) {
                 if(time%2== 0) {
-                    sun.setBackgroundColor(getResources().getColor(violet));
+                    sun.setBackgroundTintList(getResources().getColorStateList(violet));
                     su = true;
                     time++;
                 } else {
-                    sun.setBackgroundColor(getResources().getColor(colorAccent));
+                    sun.setBackgroundTintList(getResources().getColorStateList(pink));
                     su = false;
                     time++;
                 }

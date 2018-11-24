@@ -1,15 +1,38 @@
 package com.example.wi55em.coen390_alarmclock;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.AlarmManager;
+import android.app.AlertDialog;
+import android.app.PendingIntent;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
+import android.bluetooth.BluetoothManager;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Typeface;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.os.Build;
 import android.os.CountDownTimer;
+import android.os.Handler;
+import android.os.IBinder;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -17,25 +40,44 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.ScrollView;
 import android.widget.Switch;
+import android.widget.TextClock;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
 
 import com.example.wi55em.coen390_alarmclock.Bluetooth.BluetoothController;
+import com.example.wi55em.coen390_alarmclock.Bluetooth.BluetoothLeService;
+import com.example.wi55em.coen390_alarmclock.Bluetooth.BlunoLibrary;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
-public class MainActivity extends AppCompatActivity{
+import static android.support.v4.app.ActivityCompat.requestPermissions;
 
+public class MainActivity extends AppCompatActivity {
+
+    private static final int PERMISSION_REQUEST_COARSE_LOCATION = 456;
+    public static final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 123;
     protected Context context = this;
     protected BluetoothController bleController;
     protected AlarmManager alarmManager;
+    protected TextClock textclock;
+    protected Button btnOff;
+    protected Ringtone ringtone;
+    protected Timer t;
+    protected String nextAlarm;
 
     /**
      * These variable are used for menu
@@ -44,7 +86,7 @@ public class MainActivity extends AppCompatActivity{
     protected Button alarmPage;
     protected Button timerPage;
     protected Button clockwatchPage;
-    protected Button connectPage;
+    public static Button connectPage;
 
     /**
      * These variables are used for alarm page
@@ -70,7 +112,12 @@ public class MainActivity extends AppCompatActivity{
     private long mTimeLeftInMillis;
     private long mEndTime;
 
+    public TextView sendData;
+    public EditText sendArea;
+    public static TextView receiveArea;
 
+    protected TextView nAlarm;
+    protected int time = 0;
 
     private float initialX;
 
@@ -78,16 +125,58 @@ public class MainActivity extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         setupUI();
 
-        alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_COARSE_LOCATION);
+            //requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
+        }
 
-        //bleController.onConectionStateChange(BlunoLibrary.connectionStateEnum.isScanning);
+        bleController = new BluetoothController(this);
+
+
+
+        nAlarm = findViewById(R.id.NextALarm);
+        //ringtone = RingtoneManager.getRingtone(this, RingtoneManager.getDefaultUri( RingtoneManager.TYPE_RINGTONE));
+        t.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if(textclock.getText().toString().equals(nextAlarm)) {
+                    //ringtone.play();
+                    onAlarmStart();
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (time%2 == 0) {
+                            nextAlarm = getNextAlarmString();
+                            nAlarm.setText(nextAlarm);
+                        }
+                        time++;
+                    }
+                });
+
+            }
+        }, 0, 1000);
 
 
 
     }
+
+    private void onAlarmStart() {
+        Calendar c = Calendar.getInstance();
+        Alarm a = getNextAlarm();
+        c.set(Calendar.HOUR_OF_DAY, a.getHour());
+        c.set(Calendar.MINUTE, a.getMinute());
+        c.set(Calendar.SECOND, 0);
+
+        alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        Intent intent = new Intent(this, AlertReceiver.class);
+        PendingIntent pIntent = PendingIntent.getBroadcast(this, 1, intent, 0);
+        alarmManager.setExact(AlarmManager.RTC_WAKEUP, c.getTimeInMillis() , pIntent);
+
+    }
+
 
     @SuppressLint("ResourceAsColor")
     private void setupUI() {
@@ -118,6 +207,7 @@ public class MainActivity extends AppCompatActivity{
                 alarmPage.setBackgroundColor(getResources().getColor(R.color.violet));
                 timerPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 clockwatchPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+                connectPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 viewFlipper.setDisplayedChild(0);
             }
         });
@@ -129,6 +219,7 @@ public class MainActivity extends AppCompatActivity{
                 alarmPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 timerPage.setBackgroundColor(getResources().getColor(R.color.violet));
                 clockwatchPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+                connectPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 viewFlipper.setDisplayedChild(1);
             }
         });
@@ -140,16 +231,22 @@ public class MainActivity extends AppCompatActivity{
                 alarmPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 timerPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 clockwatchPage.setBackgroundColor(getResources().getColor(R.color.violet));
+                connectPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 viewFlipper.setDisplayedChild(2);
             }
         });
-
 
         connectPage = findViewById(R.id.ConnectPage);
         connectPage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                goToBluetoothControllerActivity();
+                //goToBluetoothControllerActivity();
+                alarmPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+                timerPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+                clockwatchPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+                connectPage.setBackgroundColor(getResources().getColor(R.color.violet));
+                viewFlipper.setDisplayedChild(3);
+                bleController.scan();
             }
         });
 
@@ -198,29 +295,81 @@ public class MainActivity extends AppCompatActivity{
             }
         });
 
+        sendData = findViewById(R.id.buttonSerialSend);
+        sendArea = findViewById(R.id.serialSendText);
+        receiveArea = findViewById(R.id.serialReveicedText);
+        sendData.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                bleController.serialSend(sendArea.getText().toString());
+            }
+        });
+
+        textclock = findViewById(R.id.textClock);
+
+        t = new Timer();
+
         loadListView();
+
+    }
+
+    private Alarm getNextAlarm() {
+
+        if(myAlarms.size() < 1) return null;
+
+        LocalTime time = LocalTime.now();
+
+        for(Alarm a: myAlarms) {
+            if(time.getHour() < a.getHour())
+                return a;
+            else if (time.getHour() == a.getHour())
+                if(time.getMinute() < a.getMinute())
+                    return a;
+        }
+
+        return myAlarms.get(0);
+    }
+
+    private String getNextAlarmString() {
+        Alarm alarm = getNextAlarm();
+
+        if(alarm != null) {
+            int hour = alarm.getHour();
+            int min = alarm.getMinute();
+
+            if (12 < hour) {
+                if (min < 10) return (hour - 12) + ":0" + min + " PM";
+                else return (hour - 12) + ":" + min + " PM";
+            } else
+                return hour + ":" + min + " AM";
+        }
+        return null;
     }
 
     protected void loadListView() {
-
         DatabaseHelper dbhelper = new DatabaseHelper(this);
         myAlarms = dbhelper.getAllAlarms();
 
-        Alarm temp;
-        for(int i = 0; i < myAlarms.size(); i++) {
-            int h1 = myAlarms.get(i).getHour();
-            int m1 = myAlarms.get(i).getMinute();
-            for(int j = i; j < myAlarms.size(); j++) {
-                int h2 = myAlarms.get(j).getHour();
-                int m2 = myAlarms.get(j).getMinute();
-                if (h2 < h1) {
-
-                } else if (h2 == h1) {
-
-                } else {
-
+        for (int i = 0; i < myAlarms.size(); i++) {
+            int index = i;
+            for (int j = i; j < myAlarms.size(); j++) {
+                if (myAlarms.get(j).getHour() < myAlarms.get(index).getHour()) {
+                    index = j;
+                } else if (myAlarms.get(j).getHour() == myAlarms.get(index).getHour()) {
+                    if (myAlarms.get(j).getMinute() < myAlarms.get(index).getMinute()) {
+                        index = j;
+                    }
                 }
             }
+            Alarm temp = myAlarms.get(index);
+            myAlarms.set(index, myAlarms.get(i));
+            myAlarms.set(i, temp);
+        }
+
+        dbhelper.deleteAllCourses();
+
+        for (Alarm alarm : myAlarms) {
+            dbhelper.insertAlarm(alarm);
         }
 
         listAlarms = new ArrayList<>();
@@ -231,7 +380,7 @@ public class MainActivity extends AppCompatActivity{
             imgSleep.setVisibility(View.VISIBLE);
         }
 
-        for(Alarm i: myAlarms) {
+        for (Alarm i : myAlarms) {
             noAlarm.setVisibility(View.INVISIBLE);
             imgSleep.setVisibility(View.INVISIBLE);
             listView.setVisibility(View.VISIBLE);
@@ -248,11 +397,14 @@ public class MainActivity extends AppCompatActivity{
                 Toast.makeText(getBaseContext(), listAlarms.get(position) + " selected", Toast.LENGTH_LONG).show();
             }
         });
+
+        nextAlarm = getNextAlarmString();
+
     }
 
     private void goToBluetoothControllerActivity() {
         Intent i;
-        i = new Intent(this, BluetoothController.class);
+        i = new Intent(this, FullscreenActivity.class);
         startActivity(i);
     }
 
@@ -265,8 +417,8 @@ public class MainActivity extends AppCompatActivity{
                 break;
             case MotionEvent.ACTION_UP:
                 float finalX = touchevent.getX();
-                if (initialX > finalX) {
-                    if (viewFlipper.getDisplayedChild() == 2) {
+                if (initialX > finalX + 100000) {
+                    if (viewFlipper.getDisplayedChild() == 3) {
                         viewFlipper.setDisplayedChild(0);
                         break;
                     }
@@ -274,7 +426,7 @@ public class MainActivity extends AppCompatActivity{
                     viewFlipper.showNext();
                 } else {
                     if (viewFlipper.getDisplayedChild() == 0) {
-                        viewFlipper.setDisplayedChild(2);
+                        viewFlipper.setDisplayedChild(3);
                         break;
                     }
 
@@ -283,21 +435,30 @@ public class MainActivity extends AppCompatActivity{
                 break;
         }
 
-        switch(viewFlipper.getDisplayedChild()) {
+        switch (viewFlipper.getDisplayedChild()) {
             case 0:
                 alarmPage.setBackgroundColor(getResources().getColor(R.color.violet));
                 timerPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 clockwatchPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+                connectPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 break;
             case 1:
                 alarmPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 timerPage.setBackgroundColor(getResources().getColor(R.color.violet));
                 clockwatchPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+                connectPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 break;
             case 2:
                 alarmPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 timerPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 clockwatchPage.setBackgroundColor(getResources().getColor(R.color.violet));
+                connectPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+                break;
+            case 3:
+                alarmPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+                timerPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+                clockwatchPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+                connectPage.setBackgroundColor(getResources().getColor(R.color.violet));
                 break;
         }
 
@@ -463,19 +624,24 @@ public class MainActivity extends AppCompatActivity{
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             View rowView = inflater.inflate(R.layout.row_layout, parent, false);
 
-            if(position%2 == 0) rowView.setBackgroundColor(getResources().getColor(R.color.pink));
+            if (position % 2 == 0)
+                rowView.setBackgroundColor(getResources().getColor(R.color.pink3));
             else rowView.setBackgroundColor(getResources().getColor(R.color.pink2));
 
             TextView time = rowView.findViewById(R.id.time);
             TextView am = rowView.findViewById(R.id.am);
             TextView pm = rowView.findViewById(R.id.pm);
             TextView days = rowView.findViewById(R.id.days);
-            Switch toggleButton = rowView.findViewById(R.id.switch1);
+            final Switch toggleButton = rowView.findViewById(R.id.switch1);
 
             toggleButton.setOnClickListener(new View.OnClickListener() {
 
                 @Override
                 public void onClick(View v) {
+                    myAlarms.get(position).changeOnOff();
+                    values.set(position, myAlarms.get(position).getHour() + ":" + myAlarms.get(position).getMinute() +
+                            ":" + myAlarms.get(position).getDays() + ":" + myAlarms.get(position).getOnOff());
+                    updateDatabase(myAlarms);
                     Toast.makeText(getContext(), values.get(position) + " checked", Toast.LENGTH_LONG).show();
                 }
             });
@@ -493,7 +659,7 @@ public class MainActivity extends AppCompatActivity{
 
             int t = Integer.parseInt(sTime);
 
-            if(t > 12) {
+            if (t > 12) {
                 t = t - 12;
                 sTime = "" + t;
                 pm.setTypeface(null, Typeface.BOLD);
@@ -501,27 +667,27 @@ public class MainActivity extends AppCompatActivity{
                 am.setTypeface(null, Typeface.BOLD);
             }
 
-            if(t == 0)
+            if (t == 0)
                 sTime = "0" + sTime;
 
-            if(sMin.length() < 2)
+            if (sMin.length() < 2)
                 sMin = "0" + sMin;
 
             time.setText(sTime + ":" + sMin);
 
             String d = "";
 
-            if(sDays.contains("1"))  d += "Mo ";
-            if(sDays.contains("2"))  d += "Tu ";
-            if(sDays.contains("3"))  d += "We ";
-            if(sDays.contains("4"))  d += "Th ";
-            if(sDays.contains("5"))  d += "Fr ";
-            if(sDays.contains("6"))  d += "Sa ";
-            if(sDays.contains("7"))  d += "Su ";
+            if (sDays.contains("1")) d += "Mo ";
+            if (sDays.contains("2")) d += "Tu ";
+            if (sDays.contains("3")) d += "We ";
+            if (sDays.contains("4")) d += "Th ";
+            if (sDays.contains("5")) d += "Fr ";
+            if (sDays.contains("6")) d += "Sa ";
+            if (sDays.contains("7")) d += "Su ";
 
-            days.setText(onOff);
+            days.setText(d);
 
-            if(Boolean.parseBoolean(onOff))
+            if (Boolean.parseBoolean(onOff))
                 toggleButton.setChecked(true);
             else
                 toggleButton.setChecked(false);
@@ -529,5 +695,35 @@ public class MainActivity extends AppCompatActivity{
             return rowView;
         }
     }
+
+    protected ArrayList<Alarm> updateDatabase(ArrayList<Alarm> myNewAlarms) {
+        DatabaseHelper dbhelper = new DatabaseHelper(this);
+        ArrayList<Alarm> myAlarms = myNewAlarms;
+
+        for (int i = 0; i < myAlarms.size(); i++) {
+            int index = i;
+            for (int j = i; j < myAlarms.size(); j++) {
+                if (myAlarms.get(j).getHour() < myAlarms.get(index).getHour()) {
+                    index = j;
+                } else if (myAlarms.get(j).getHour() == myAlarms.get(index).getHour()) {
+                    if (myAlarms.get(j).getMinute() < myAlarms.get(index).getMinute()) {
+                        index = j;
+                    }
+                }
+            }
+            Alarm temp = myAlarms.get(index);
+            myAlarms.set(index, myAlarms.get(i));
+            myAlarms.set(i, temp);
+        }
+
+        dbhelper.deleteAllCourses();
+
+        for (Alarm alarm : myAlarms) {
+            dbhelper.insertAlarm(alarm);
+        }
+        return myAlarms;
+    }
+
+
 
 }

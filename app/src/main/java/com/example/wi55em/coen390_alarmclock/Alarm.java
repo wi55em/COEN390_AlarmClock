@@ -2,12 +2,14 @@ package com.example.wi55em.coen390_alarmclock;
 
 public class Alarm {
 
+    private long id;
     private int hour;
     private int minute;
     private int days;
     private boolean on;
 
-    public Alarm(int hour, int minute, int days, boolean on) {
+    public Alarm(int id, int hour, int minute, int days, boolean on) {
+        this.id = id;
         this.hour = hour;
         this.minute = minute;
         this.days = days;
@@ -30,6 +32,10 @@ public class Alarm {
         this.on = on;
     }
 
+    public long getID() {
+        return id;
+    }
+
     public int getHour() {
         return hour;
     }
@@ -44,6 +50,14 @@ public class Alarm {
 
     public boolean getOnOff() {
         return on;
+    }
+
+    public void changeOnOff() {
+        if (on) {
+            on = false;
+        } else {
+            on = true;
+        }
     }
 
 }

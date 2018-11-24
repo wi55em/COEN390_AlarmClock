@@ -104,7 +104,7 @@
             android:layout_marginEnd="313dp"
             android:layout_marginBottom="12dp"
             android:clickable="true"
-            app:backgroundTint="@color/violet"
+            app:backgroundTint="@color/pink"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintVertical_bias="0.0" />
 
@@ -136,7 +136,7 @@
             android:layout_marginEnd="266dp"
             android:layout_marginBottom="12dp"
             android:clickable="true"
-            app:backgroundTint="@color/violet"
+            app:backgroundTint="@color/pink"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintVertical_bias="0.0" />
 
@@ -169,7 +169,7 @@
             android:layout_marginEnd="217dp"
             android:layout_marginBottom="12dp"
             android:clickable="true"
-            app:backgroundTint="@color/violet"
+            app:backgroundTint="@color/pink"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintVertical_bias="0.0" />
 
@@ -202,7 +202,7 @@
             android:layout_marginEnd="171dp"
             android:layout_marginBottom="12dp"
             android:clickable="true"
-            app:backgroundTint="@color/violet"
+            app:backgroundTint="@color/pink"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintVertical_bias="0.0" />
 
@@ -235,7 +235,7 @@
             android:layout_marginEnd="125dp"
             android:layout_marginBottom="12dp"
             android:clickable="true"
-            app:backgroundTint="@color/violet"
+            app:backgroundTint="@color/pink"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintVertical_bias="0.0" />
 
@@ -268,7 +268,7 @@
             android:layout_marginEnd="76dp"
             android:layout_marginBottom="12dp"
             android:clickable="true"
-            app:backgroundTint="@color/violet"
+            app:backgroundTint="@color/pink"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintVertical_bias="0.0" />
 
@@ -301,7 +301,7 @@
             android:layout_marginEnd="30dp"
             android:layout_marginBottom="12dp"
             android:clickable="true"
-            app:backgroundTint="@color/violet"
+            app:backgroundTint="@color/pink"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintVertical_bias="0.0" />
 

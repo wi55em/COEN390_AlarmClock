@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -21,15 +23,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".CreateAlarmActivity"
-            android:label="@string/title_activity_create_alarm"
-            android:theme="@style/AppTheme" />
+        <activity android:name=".FullscreenActivity"></activity>
+        <service
+            android:name=".Bluetooth.BluetoothLeService"
+            android:enabled="true" />
 
-        <service android:name=".Bluetooth.BluetoothLeService" android:enabled="true"/>
-        <activity
-            android:name=".Bluetooth.BluetoothController"
-            android:label="@string/title_activity_main"></activity>
+
+
     </application>
 
 </manifest>
