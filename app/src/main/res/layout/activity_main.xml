@@ -98,7 +98,7 @@
 
         <include
             android:id="@+id/bluetooth_include"
-            layout="@layout/bluetooth_layout" />
+            layout="@layout/bluetooth_layout"/>
 
     </ViewFlipper>
 </android.support.constraint.ConstraintLayout>

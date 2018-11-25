@@ -22,6 +22,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -41,7 +42,6 @@ public class BluetoothController {
 	AlertDialog mScanDeviceDialog;
 	private BluetoothAdapter mBluetoothAdapter;
 	BluetoothLeService mBluetoothLeService;
-    private ServiceConnection mServiceConnection;
 	private String serialReceivedText;
 	private Context context;
 	private LeDeviceListAdapter mLeDeviceListAdapter;
@@ -49,9 +49,9 @@ public class BluetoothController {
 	private String mDeviceName;
 	private String mDeviceAddress;
 	private boolean mScanning = false;
-    public boolean mConnected = false;
+	public boolean mConnected = false;
 
-	private int mBaudrate=115200;	//set the default baud rate to 115200
+	private int mBaudrate=9600;	//set the default baud rate to 115200
 	private String mPassword="AT+PASSWOR=DFRobot\r\n";
 	private String mBaudrateBuffer = "AT+CURRUART="+mBaudrate+"\r\n";
 
@@ -85,31 +85,17 @@ public class BluetoothController {
 			//mBluetoothLeService.close();
 		}};
 
-	public BluetoothController(final Context context) {
+	public BluetoothController(final Context context, BluetoothLeService mBluetoothLeService) {
 		this.context = context;
+		this.mBluetoothLeService = mBluetoothLeService;
 		onCreateProcess();
-
-		mServiceConnection = new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName componentName, IBinder service) {
-                System.out.println("mServiceConnection onServiceConnected");
-                mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
-                if (!mBluetoothLeService.initialize()) {
-
-                    ((Activity) context).finish();
-                }
-            }
-            @Override
-            public void onServiceDisconnected(ComponentName componentName) {
-                System.out.println("mServiceConnection onServiceDisconnected");
-                mBluetoothLeService = null;
-            }
-        };
+		//makeGattUpdateIntentFilter();
 	}
+
 
 	public void onCreateProcess() {
 
-		serialBegin(115200);
+		serialBegin(9600);
 
 		if(!initiate())
 		{
@@ -143,10 +129,19 @@ public class BluetoothController {
 					mDeviceName = device.getName().toString();
 					mDeviceAddress = device.getAddress().toString();
 
+					/*final Intent intent = new Intent(context, DeviceControlActivity.class);
+					intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_NAME, device.getName());
+					intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_ADDRESS, device.getAddress());
+					context.startActivity(intent);*/
+
+					Intent gattServiceIntent = new Intent(context, BluetoothLeService.class);
+					context.bindService(gattServiceIntent, mServiceConnection, context.BIND_AUTO_CREATE);
+
 					if (mBluetoothLeService.connect(mDeviceAddress)) {
 						mConnectionState= connectionStateEnum.isConnecting;
 						onConectionStateChange(mConnectionState);
 						mHandler.postDelayed(mConnectingOverTimeRunnable, 2000);
+						context.registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 					} else {
 						mConnectionState= connectionStateEnum.isToScan;
 						onConectionStateChange(mConnectionState);
@@ -186,9 +181,8 @@ public class BluetoothController {
 
 	public void scan() {
 		buttonScanOnClickProcess();
-		Intent gattServiceIntent = new Intent(context, BluetoothLeService.class);
-		context.bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE);
-		//getGattServices();
+		//Intent gattServiceIntent = new Intent(context, BluetoothLeService.class);
+		//context.bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE);
 	}
 
 	public void serialBegin(int baud){
@@ -203,6 +197,22 @@ public class BluetoothController {
 		}
 	}
 
+	ServiceConnection mServiceConnection = new ServiceConnection() {
+		@Override
+		public void onServiceConnected(ComponentName componentName, IBinder service) {
+			System.out.println("mServiceConnection onServiceConnected");
+			mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
+			if (!mBluetoothLeService.initialize()) {
+				((Activity) context).finish();
+			}
+		}
+		@Override
+		public void onServiceDisconnected(ComponentName componentName) {
+			System.out.println("mServiceConnection onServiceDisconnected");
+			mBluetoothLeService = null;
+		}
+	};
+
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == REQUEST_ENABLE_BT && resultCode == Activity.RESULT_CANCELED) {
 			((Activity) context).finish();
@@ -212,32 +222,31 @@ public class BluetoothController {
 
 	public void onConectionStateChange(connectionStateEnum theConnectionState) {//Once connection state changes, this function will be called
 		switch (theConnectionState) {											//Four connection state
-		case isConnected:
-			MainActivity.connectPage.setText("Connected");
-			break;
-		case isConnecting:
-			MainActivity.connectPage.setText("Connecting");
-			break;
-		case isToScan:
-			MainActivity.connectPage.setText("Scan");
-			break;
-		case isScanning:
-			MainActivity.connectPage.setText("Scanning");
-			break;
-		case isDisconnecting:
-			MainActivity.connectPage.setText("isDisconnecting");
-			break;
-		default:
-			break;
+			case isConnected:
+				MainActivity.connectPage.setText("Connected");
+				break;
+			case isConnecting:
+				MainActivity.connectPage.setText("Connecting");
+				break;
+			case isToScan:
+				MainActivity.connectPage.setText("Connect");
+				break;
+			case isScanning:
+				MainActivity.connectPage.setText("Scanning");
+				break;
+			case isDisconnecting:
+				MainActivity.connectPage.setText("isDisconnecting");
+				break;
+			default:
+				break;
 		}
 	}
 
-
 	public void onSerialReceived(String theString) {							//Once connection data received, this function will be called
 		// TODO Auto-generated method stub
-		serialReceivedText += theString + "\n";
-		MainActivity.receiveArea.append(serialReceivedText);//append the text into the EditText
+		MainActivity.serialReceivedText.append(theString);							//append the text into the EditText
 		//The Serial data from the BLUNO may be sub-packaged, so using a buffer to hold the String is a good choice.
+		((ScrollView)MainActivity.serialReceivedText.getParent()).fullScroll(View.FOCUS_DOWN);
 	}
 
 	public void buttonScanOnClickProcess()
@@ -297,118 +306,118 @@ public class BluetoothController {
 		}
 	}
 
-    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
-        @SuppressLint("DefaultLocale")
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            System.out.println("mGattUpdateReceiver->onReceive->action="+action);
-            if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
-                mConnected = true;
-                mHandler.removeCallbacks(mConnectingOverTimeRunnable);
-            } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
-                mConnected = false;
-                mConnectionState = connectionStateEnum.isToScan;
-                onConectionStateChange(mConnectionState);
-                mHandler.removeCallbacks(mDisonnectingOverTimeRunnable);
-                mBluetoothLeService.close();
-            } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
-                // Show all the supported services and characteristics on the user interface.
-                for (BluetoothGattService gattService : mBluetoothLeService.getSupportedGattServices()) {
-                    System.out.println("ACTION_GATT_SERVICES_DISCOVERED  "+
-                            gattService.getUuid().toString());
-                }
-                getGattServices(mBluetoothLeService.getSupportedGattServices());
-            } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-                if(mSCharacteristic==mModelNumberCharacteristic)
-                {
-                    if (intent.getStringExtra(BluetoothLeService.EXTRA_DATA).toUpperCase().startsWith("DF BLUNO")) {
-                        mBluetoothLeService.setCharacteristicNotification(mSCharacteristic, false);
-                        mSCharacteristic=mCommandCharacteristic;
-                        mSCharacteristic.setValue(mPassword);
-                        mBluetoothLeService.writeCharacteristic(mSCharacteristic);
-                        mSCharacteristic.setValue(mBaudrateBuffer);
-                        mBluetoothLeService.writeCharacteristic(mSCharacteristic);
-                        mSCharacteristic=mSerialPortCharacteristic;
-                        mBluetoothLeService.setCharacteristicNotification(mSCharacteristic, true);
-                        mConnectionState = connectionStateEnum.isConnected;
-                        onConectionStateChange(mConnectionState);
+	private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
+		@SuppressLint("DefaultLocale")
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			final String action = intent.getAction();
+			System.out.println("mGattUpdateReceiver->onReceive->action="+action);
+			if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
+				mConnected = true;
+				mHandler.removeCallbacks(mConnectingOverTimeRunnable);
+			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
+				mConnected = false;
+				mConnectionState = connectionStateEnum.isToScan;
+				onConectionStateChange(mConnectionState);
+				mHandler.removeCallbacks(mDisonnectingOverTimeRunnable);
+				mBluetoothLeService.close();
+			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
+				// Show all the supported services and characteristics on the user interface.
+				for (BluetoothGattService gattService : mBluetoothLeService.getSupportedGattServices()) {
+					System.out.println("ACTION_GATT_SERVICES_DISCOVERED  "+
+							gattService.getUuid().toString());
+				}
+				getGattServices(mBluetoothLeService.getSupportedGattServices());
+			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
+				if(mSCharacteristic==mModelNumberCharacteristic)
+				{
+					if (intent.getStringExtra(BluetoothLeService.EXTRA_DATA).toUpperCase().startsWith("DF BLUNO")) {
+						mBluetoothLeService.setCharacteristicNotification(mSCharacteristic, false);
+						mSCharacteristic=mCommandCharacteristic;
+						mSCharacteristic.setValue(mPassword);
+						mBluetoothLeService.writeCharacteristic(mSCharacteristic);
+						mSCharacteristic.setValue(mBaudrateBuffer);
+						mBluetoothLeService.writeCharacteristic(mSCharacteristic);
+						mSCharacteristic=mSerialPortCharacteristic;
+						mBluetoothLeService.setCharacteristicNotification(mSCharacteristic, true);
+						mConnectionState = connectionStateEnum.isConnected;
+						onConectionStateChange(mConnectionState);
 
-                    }
-                    else {
-                        Toast.makeText(context, "Please select DFRobot devices",Toast.LENGTH_SHORT).show();
-                        mConnectionState = connectionStateEnum.isToScan;
-                        onConectionStateChange(mConnectionState);
-                    }
-                }
-                else if (mSCharacteristic==mSerialPortCharacteristic) {
-                    onSerialReceived(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
-                }
+					}
+					else {
+						Toast.makeText(context, "Please select DFRobot devices",Toast.LENGTH_SHORT).show();
+						mConnectionState = connectionStateEnum.isToScan;
+						onConectionStateChange(mConnectionState);
+					}
+				}
+				else if (mSCharacteristic==mSerialPortCharacteristic) {
+					onSerialReceived(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
+				}
 
 
-                System.out.println("displayData "+intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
+				System.out.println("displayData "+intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
 
 //            	mPlainProtocol.mReceivedframe.append(intent.getStringExtra(BluetoothLeService.EXTRA_DATA)) ;
 //            	System.out.print("mPlainProtocol.mReceivedframe:");
 //            	System.out.println(mPlainProtocol.mReceivedframe.toString());
 
 
-            }
-        }
-    };
+			}
+		}
+	};
 
-    private void getGattServices(List<BluetoothGattService> gattServices) {
-        if (gattServices == null) return;
-        String uuid = null;
-        mModelNumberCharacteristic=null;
-        mSerialPortCharacteristic=null;
-        mCommandCharacteristic=null;
-        mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
+	private void getGattServices(List<BluetoothGattService> gattServices) {
+		if (gattServices == null) return;
+		String uuid = null;
+		mModelNumberCharacteristic=null;
+		mSerialPortCharacteristic=null;
+		mCommandCharacteristic=null;
+		mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
 
-        // Loops through available GATT Services.
-        for (BluetoothGattService gattService : gattServices) {
-            uuid = gattService.getUuid().toString();
-            System.out.println("displayGattServices + uuid="+uuid);
+		// Loops through available GATT Services.
+		for (BluetoothGattService gattService : gattServices) {
+			uuid = gattService.getUuid().toString();
+			System.out.println("displayGattServices + uuid="+uuid);
 
-            List<BluetoothGattCharacteristic> gattCharacteristics =
-                    gattService.getCharacteristics();
-            ArrayList<BluetoothGattCharacteristic> charas =
-                    new ArrayList<BluetoothGattCharacteristic>();
+			List<BluetoothGattCharacteristic> gattCharacteristics =
+					gattService.getCharacteristics();
+			ArrayList<BluetoothGattCharacteristic> charas =
+					new ArrayList<BluetoothGattCharacteristic>();
 
-            // Loops through available Characteristics.
-            for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
-                charas.add(gattCharacteristic);
-                uuid = gattCharacteristic.getUuid().toString();
-                if(uuid.equals(ModelNumberStringUUID)){
-                    mModelNumberCharacteristic=gattCharacteristic;
-                    System.out.println("mModelNumberCharacteristic  "+mModelNumberCharacteristic.getUuid().toString());
-                }
-                else if(uuid.equals(SerialPortUUID)){
-                    mSerialPortCharacteristic = gattCharacteristic;
-                    System.out.println("mSerialPortCharacteristic  "+mSerialPortCharacteristic.getUuid().toString());
+			// Loops through available Characteristics.
+			for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
+				charas.add(gattCharacteristic);
+				uuid = gattCharacteristic.getUuid().toString();
+				if(uuid.equals(ModelNumberStringUUID)){
+					mModelNumberCharacteristic=gattCharacteristic;
+					System.out.println("mModelNumberCharacteristic  "+mModelNumberCharacteristic.getUuid().toString());
+				}
+				else if(uuid.equals(SerialPortUUID)){
+					mSerialPortCharacteristic = gattCharacteristic;
+					System.out.println("mSerialPortCharacteristic  "+mSerialPortCharacteristic.getUuid().toString());
 //                    updateConnectionState(R.string.comm_establish);
-                }
-                else if(uuid.equals(CommandUUID)){
-                    mCommandCharacteristic = gattCharacteristic;
-                    System.out.println("mSerialPortCharacteristic  "+mSerialPortCharacteristic.getUuid().toString());
+				}
+				else if(uuid.equals(CommandUUID)){
+					mCommandCharacteristic = gattCharacteristic;
+					System.out.println("mSerialPortCharacteristic  "+mSerialPortCharacteristic.getUuid().toString());
 //                    updateConnectionState(R.string.comm_establish);
-                }
-            }
-            mGattCharacteristics.add(charas);
-        }
+				}
+			}
+			mGattCharacteristics.add(charas);
+		}
 
-        if (mModelNumberCharacteristic==null || mSerialPortCharacteristic==null || mCommandCharacteristic==null) {
-            Toast.makeText(context, "Please select DFRobot devices",Toast.LENGTH_SHORT).show();
-            mConnectionState = connectionStateEnum.isToScan;
-            onConectionStateChange(mConnectionState);
-        }
-        else {
-            mSCharacteristic=mModelNumberCharacteristic;
-            mBluetoothLeService.setCharacteristicNotification(mSCharacteristic, true);
-            mBluetoothLeService.readCharacteristic(mSCharacteristic);
-        }
+		if (mModelNumberCharacteristic==null || mSerialPortCharacteristic==null || mCommandCharacteristic==null) {
+			Toast.makeText(context, "Please select DFRobot devices",Toast.LENGTH_SHORT).show();
+			mConnectionState = connectionStateEnum.isToScan;
+			onConectionStateChange(mConnectionState);
+		}
+		else {
+			mSCharacteristic=mModelNumberCharacteristic;
+			mBluetoothLeService.setCharacteristicNotification(mSCharacteristic, true);
+			mBluetoothLeService.readCharacteristic(mSCharacteristic);
+		}
 
-    }
+	}
 
 	private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
 
@@ -420,7 +429,7 @@ public class BluetoothController {
 				@Override
 				public void run() {
 					scan++;
-					if(scan <= 500) {
+					if(scan <= 200) {
 						System.out.println("mLeScanCallback onLeScan run ");
 						mLeDeviceListAdapter.addDevice(device);
 					} else {
@@ -433,14 +442,14 @@ public class BluetoothController {
 		}
 	};
 
-    private static IntentFilter makeGattUpdateIntentFilter() {
-        final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
-        intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
-        return intentFilter;
-    }
+	private static IntentFilter makeGattUpdateIntentFilter() {
+		final IntentFilter intentFilter = new IntentFilter();
+		intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
+		intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
+		intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+		intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
+		return intentFilter;
+	}
 
 	public class LeDeviceListAdapter extends BaseAdapter {
 		private ArrayList<BluetoothDevice> mLeDevices;

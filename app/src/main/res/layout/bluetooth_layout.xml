@@ -22,12 +22,13 @@
             android:id="@+id/serialReveicedText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:ems="10"
-            android:textSize="10sp"
             android:layout_below="@+id/editText2"
             android:layout_alignStart="@+id/editText2"
             android:layout_alignEnd="@+id/serialSendText"
-            android:layout_alignParentBottom="true" />
+            android:layout_alignParentBottom="true"
+            android:ems="10"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
     </ScrollView>
 
     <Button
@@ -42,11 +43,12 @@
         android:id="@+id/editText2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/serialSendText"
         android:layout_below="@+id/serialSendText"
+        android:layout_alignLeft="@+id/serialSendText"
         android:layout_marginTop="20dp"
         android:ems="10"
         android:text="Received Data:"
+        android:textColor="@color/white"
         android:textSize="25sp" />
 
     <EditText

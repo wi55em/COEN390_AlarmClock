@@ -24,6 +24,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".FullscreenActivity"></activity>
+        <activity android:name=".Bluetooth.BluetoothController"></activity>
+        <activity android:name=".Bluetooth.DeviceControlActivity"></activity>
         <service
             android:name=".Bluetooth.BluetoothLeService"
             android:enabled="true" />

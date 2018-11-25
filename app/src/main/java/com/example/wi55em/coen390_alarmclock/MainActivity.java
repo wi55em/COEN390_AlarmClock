@@ -70,8 +70,9 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 456;
     public static final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 123;
-    protected Context context = this;
+    public Context context = this;
     protected BluetoothController bleController;
+    protected BluetoothLeService bleService;
     protected AlarmManager alarmManager;
     protected TextClock textclock;
     protected Button btnOff;
@@ -99,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
     protected ArrayList<String> listAlarms = new ArrayList<>();
 
     /**
-     * These variable are used for timer page
+     * These variables are used for timer page
      */
     private EditText mEditTextInput;
     private TextView mTextViewCountDown;
@@ -112,9 +113,10 @@ public class MainActivity extends AppCompatActivity {
     private long mTimeLeftInMillis;
     private long mEndTime;
 
-    public TextView sendData;
-    public EditText sendArea;
-    public static TextView receiveArea;
+    public static Button buttonScan;
+    public Button buttonSerialSend;
+    public EditText serialSendText;
+    public static TextView serialReceivedText;
 
     protected TextView nAlarm;
     protected int time = 0;
@@ -125,6 +127,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        bleService = new BluetoothLeService();
+        bleController = new BluetoothController(context, bleService);
+
         setupUI();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -132,18 +137,14 @@ public class MainActivity extends AppCompatActivity {
             //requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
         }
 
-        bleController = new BluetoothController(this);
-
-
-
         nAlarm = findViewById(R.id.NextALarm);
-        //ringtone = RingtoneManager.getRingtone(this, RingtoneManager.getDefaultUri( RingtoneManager.TYPE_RINGTONE));
+        ringtone = RingtoneManager.getRingtone(this, RingtoneManager.getDefaultUri( RingtoneManager.TYPE_RINGTONE));
         t.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 if(textclock.getText().toString().equals(nextAlarm)) {
-                    //ringtone.play();
-                    onAlarmStart();
+                    ringtone.play();
+                    //onAlarmStart();
                 }
                 runOnUiThread(new Runnable() {
                     @Override
@@ -176,7 +177,6 @@ public class MainActivity extends AppCompatActivity {
         alarmManager.setExact(AlarmManager.RTC_WAKEUP, c.getTimeInMillis() , pIntent);
 
     }
-
 
     @SuppressLint("ResourceAsColor")
     private void setupUI() {
@@ -246,7 +246,7 @@ public class MainActivity extends AppCompatActivity {
                 clockwatchPage.setBackgroundColor(getResources().getColor(android.R.color.transparent));
                 connectPage.setBackgroundColor(getResources().getColor(R.color.violet));
                 viewFlipper.setDisplayedChild(3);
-                bleController.scan();
+
             }
         });
 
@@ -295,18 +295,30 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        sendData = findViewById(R.id.buttonSerialSend);
-        sendArea = findViewById(R.id.serialSendText);
-        receiveArea = findViewById(R.id.serialReveicedText);
-        sendData.setOnClickListener(new View.OnClickListener() {
+        serialReceivedText=(TextView) findViewById(R.id.serialReveicedText);	//initial the EditText of the received data
+        serialSendText=(EditText) findViewById(R.id.serialSendText);			//initial the EditText of the sending data
+
+        buttonSerialSend = (Button) findViewById(R.id.buttonSerialSend);		//initial the button for sending the data
+        buttonSerialSend.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View v) {
-                bleController.serialSend(sendArea.getText().toString());
+                // TODO Auto-generated method stub
+                bleController.serialSend(serialSendText.getText().toString());				//send the data to the BLUNO
+            }
+        });
+
+        buttonScan = findViewById(R.id.buttonScan);					//initial the button for scanning the BLE device
+        buttonScan.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+                bleController.buttonScanOnClickProcess();								//Alert Dialog for selecting the BLE device
             }
         });
 
         textclock = findViewById(R.id.textClock);
-
         t = new Timer();
 
         loadListView();
@@ -404,7 +416,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void goToBluetoothControllerActivity() {
         Intent i;
-        i = new Intent(this, FullscreenActivity.class);
+        i = new Intent(this, BluetoothController.class);
         startActivity(i);
     }
 
@@ -724,6 +736,7 @@ public class MainActivity extends AppCompatActivity {
         return myAlarms;
     }
 
-
-
+    public Context getContext() {
+        return context;
+    }
 }
