@@ -489,7 +489,7 @@ public class BluetoothLeService extends Service {
         }
         System.out.println("allwriteCharacteristicString:"+writeCharacteristicString);
 
-        //As the communication is asynchronous content string and characteristic should be pushed into an ring buffer for further transmission
+        //As the communication is asynchronous content string and characteristic should be pushed into an migente buffer for further transmission
         mCharacteristicRingBuffer.push(new BluetoothGattCharacteristicHelper(characteristic,writeCharacteristicString) );
         System.out.println("mCharacteristicRingBufferlength:"+mCharacteristicRingBuffer.size());
 

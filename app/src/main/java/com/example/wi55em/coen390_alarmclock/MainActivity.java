@@ -2,37 +2,24 @@ package com.example.wi55em.coen390_alarmclock;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.AlarmManager;
-import android.app.AlertDialog;
 import android.app.PendingIntent;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattService;
-import android.bluetooth.BluetoothManager;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.graphics.Typeface;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.CountDownTimer;
-import android.os.Handler;
-import android.os.IBinder;
+import android.os.SystemClock;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.text.AutoText;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -40,12 +27,11 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.Chronometer;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.ScrollView;
 import android.widget.Switch;
 import android.widget.TextClock;
 import android.widget.TextView;
@@ -54,29 +40,23 @@ import android.widget.ViewFlipper;
 
 import com.example.wi55em.coen390_alarmclock.Bluetooth.BluetoothController;
 import com.example.wi55em.coen390_alarmclock.Bluetooth.BluetoothLeService;
-import com.example.wi55em.coen390_alarmclock.Bluetooth.BlunoLibrary;
 
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static android.support.v4.app.ActivityCompat.requestPermissions;
-
 public class MainActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 456;
-    public static final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 123;
     public Context context = this;
-    protected BluetoothController bleController;
+    public static BluetoothController bleController;
     protected BluetoothLeService bleService;
     protected AlarmManager alarmManager;
-    protected TextClock textclock;
+    public TextClock textclock;
     protected Button btnOff;
-    protected Ringtone ringtone;
     protected Timer t;
     protected String nextAlarm;
 
@@ -113,10 +93,24 @@ public class MainActivity extends AppCompatActivity {
     private long mTimeLeftInMillis;
     private long mEndTime;
 
+    /**
+     * These variable are used for stopwatch page
+     */
+    // providing basic and useful functions for time measurement,
+    // such as start(), stop(), multiple laps and total elapsed running time.
+    private Chronometer chronometer;
+    private long pauseOffset;
+    private boolean running;
+    private Button Buttonstart;
+
+    /**
+     * These variable are used for bluetooth connection page
+     */
     public static Button buttonScan;
     public Button buttonSerialSend;
     public EditText serialSendText;
     public static TextView serialReceivedText;
+    public static TextView connectionStatus;
 
     protected TextView nAlarm;
     protected int time = 0;
@@ -137,45 +131,27 @@ public class MainActivity extends AppCompatActivity {
             //requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
         }
 
-        nAlarm = findViewById(R.id.NextALarm);
-        ringtone = RingtoneManager.getRingtone(this, RingtoneManager.getDefaultUri( RingtoneManager.TYPE_RINGTONE));
-        t.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                if(textclock.getText().toString().equals(nextAlarm)) {
-                    ringtone.play();
-                    //onAlarmStart();
-                }
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (time%2 == 0) {
-                            nextAlarm = getNextAlarmString();
-                            nAlarm.setText(nextAlarm);
-                        }
-                        time++;
-                    }
-                });
-
-            }
-        }, 0, 1000);
-
-
-
     }
 
-    private void onAlarmStart() {
-        Calendar c = Calendar.getInstance();
+    private void onAlarmSet() {
         Alarm a = getNextAlarm();
-        c.set(Calendar.HOUR_OF_DAY, a.getHour());
-        c.set(Calendar.MINUTE, a.getMinute());
-        c.set(Calendar.SECOND, 0);
+        if( a != null) {
+            Calendar c = Calendar.getInstance();
+            //c.clear();
+            /*c.set(Calendar.HOUR_OF_DAY, a.getHour() + 12);
+            c.set(Calendar.MINUTE, a.getMinute());
+            c.set(Calendar.SECOND, 0);*/
 
-        alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        Intent intent = new Intent(this, AlertReceiver.class);
-        PendingIntent pIntent = PendingIntent.getBroadcast(this, 1, intent, 0);
-        alarmManager.setExact(AlarmManager.RTC_WAKEUP, c.getTimeInMillis() , pIntent);
+            c.set(c.get(c.YEAR), c.get(c.MONTH), c.get(c.DAY_OF_MONTH), a.getHour(),
+                    a.getMinute(), 0);
 
+            alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+            Intent intent = new Intent(this, AlertReceiver.class);
+            intent.putExtra("alarm", 0);
+            PendingIntent pIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, c.getTimeInMillis(), pIntent);
+
+        }
     }
 
     @SuppressLint("ResourceAsColor")
@@ -295,6 +271,21 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        Buttonstart = findViewById(R.id.start);
+        chronometer = findViewById(R.id.stopwatch);
+        chronometer.setFormat("Time: %h:%m:%s");
+        chronometer.setBase(SystemClock.elapsedRealtime());
+
+        chronometer.setOnChronometerTickListener(new Chronometer.OnChronometerTickListener() {
+            @Override
+            public void onChronometerTick(Chronometer chronometer) {
+                if ((SystemClock.elapsedRealtime() - chronometer.getBase()) >= 10000000) {
+                    chronometer.setBase(SystemClock.elapsedRealtime());
+                    Toast.makeText(MainActivity.this, "Ringing!", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
         serialReceivedText=(TextView) findViewById(R.id.serialReveicedText);	//initial the EditText of the received data
         serialSendText=(EditText) findViewById(R.id.serialSendText);			//initial the EditText of the sending data
 
@@ -317,6 +308,10 @@ public class MainActivity extends AppCompatActivity {
                 bleController.buttonScanOnClickProcess();								//Alert Dialog for selecting the BLE device
             }
         });
+
+        connectionStatus = findViewById(R.id.connectionStatus);
+
+        nAlarm = findViewById(R.id.NextALarm);
 
         textclock = findViewById(R.id.textClock);
         t = new Timer();
@@ -352,7 +347,8 @@ public class MainActivity extends AppCompatActivity {
             if (12 < hour) {
                 if (min < 10) return (hour - 12) + ":0" + min + " PM";
                 else return (hour - 12) + ":" + min + " PM";
-            } else
+            } else if (hour == 0) return (hour + 12) + ":" + min + " AM";
+            else
                 return hour + ":" + min + " AM";
         }
         return null;
@@ -411,6 +407,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         nextAlarm = getNextAlarmString();
+        nAlarm.setText(nextAlarm);
+        onAlarmSet();
 
     }
 
@@ -563,6 +561,29 @@ public class MainActivity extends AppCompatActivity {
             InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
+    }
+
+    public void startChronometer(View v) {
+        if (!running) {
+            chronometer.start();
+            chronometer.setBase(SystemClock.elapsedRealtime() - pauseOffset);
+            //set base used for continue counting from privious stop point
+            running = true;
+        }
+    }
+
+    public void pauseChronometer(View v) {
+        if (running) {
+            chronometer.stop();
+            pauseOffset = SystemClock.elapsedRealtime() - chronometer.getBase();
+            running = false;
+        }
+
+    }
+
+    public void resetChronometer(View v) {
+        chronometer.setBase(SystemClock.elapsedRealtime());
+        pauseOffset = 0;
     }
 
     @Override

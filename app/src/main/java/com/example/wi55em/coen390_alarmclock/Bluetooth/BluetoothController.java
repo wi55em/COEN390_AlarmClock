@@ -31,6 +31,8 @@ import com.example.wi55em.coen390_alarmclock.R;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class BluetoothController {
 
@@ -51,7 +53,7 @@ public class BluetoothController {
 	private boolean mScanning = false;
 	public boolean mConnected = false;
 
-	private int mBaudrate=9600;	//set the default baud rate to 115200
+	private int mBaudrate=115200;	//set the default baud rate to 115200
 	private String mPassword="AT+PASSWOR=DFRobot\r\n";
 	private String mBaudrateBuffer = "AT+CURRUART="+mBaudrate+"\r\n";
 
@@ -95,7 +97,7 @@ public class BluetoothController {
 
 	public void onCreateProcess() {
 
-		serialBegin(9600);
+		serialBegin(mBaudrate);
 
 		if(!initiate())
 		{
@@ -136,6 +138,12 @@ public class BluetoothController {
 
 					Intent gattServiceIntent = new Intent(context, BluetoothLeService.class);
 					context.bindService(gattServiceIntent, mServiceConnection, context.BIND_AUTO_CREATE);
+
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
 
 					if (mBluetoothLeService.connect(mDeviceAddress)) {
 						mConnectionState= connectionStateEnum.isConnecting;
@@ -224,18 +232,35 @@ public class BluetoothController {
 		switch (theConnectionState) {											//Four connection state
 			case isConnected:
 				MainActivity.connectPage.setText("Connected");
+				MainActivity.buttonScan.setText("Disconnect");
+				MainActivity.connectionStatus.setText("Bluetooth Connected Successfully");
+				Timer t = new Timer();
+				t.scheduleAtFixedRate(new TimerTask() {
+
+					@Override
+					public void run() {
+						serialSend("C");
+					}
+				}, 0 , 3000);
+
 				break;
 			case isConnecting:
 				MainActivity.connectPage.setText("Connecting");
+				MainActivity.buttonScan.setText("Connecting");
 				break;
 			case isToScan:
 				MainActivity.connectPage.setText("Connect");
+				MainActivity.buttonScan.setText("Scan");
 				break;
 			case isScanning:
 				MainActivity.connectPage.setText("Scanning");
+				MainActivity.buttonScan.setText("Scanning");
 				break;
 			case isDisconnecting:
 				MainActivity.connectPage.setText("isDisconnecting");
+				MainActivity.buttonScan.setText("isDisconnecting");
+				MainActivity.connectionStatus.setText("Bluetooth Not Connected \n " +
+						"Please scan and choose Bluno as a device");
 				break;
 			default:
 				break;
@@ -244,7 +269,7 @@ public class BluetoothController {
 
 	public void onSerialReceived(String theString) {							//Once connection data received, this function will be called
 		// TODO Auto-generated method stub
-		MainActivity.serialReceivedText.append(theString);							//append the text into the EditText
+		MainActivity.serialReceivedText.setText(theString);							//append the text into the EditText
 		//The Serial data from the BLUNO may be sub-packaged, so using a buffer to hold the String is a good choice.
 		((ScrollView)MainActivity.serialReceivedText.getParent()).fullScroll(View.FOCUS_DOWN);
 	}
@@ -429,7 +454,7 @@ public class BluetoothController {
 				@Override
 				public void run() {
 					scan++;
-					if(scan <= 200) {
+					if(scan <= 300) {
 						System.out.println("mLeScanCallback onLeScan run ");
 						mLeDeviceListAdapter.addDevice(device);
 					} else {
